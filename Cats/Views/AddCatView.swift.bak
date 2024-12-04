@@ -1,0 +1,106 @@
+import SwiftUI
+import PhotosUI
+
+struct AddCatView: View {
+    @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject private var catDataManager: CatDataManager
+    
+    private var editingCat: Cat?
+    @State private var name: String = ""
+    @State private var gender: Cat.Gender?
+    @State private var birthDate: Date = Date()
+    @State private var weight: String = ""
+    @State private var showImagePicker = false
+    @State private var avatarImage: UIImage?
+    
+    init(editingCat: Cat? = nil) {
+        self.editingCat = editingCat
+        if let cat = editingCat {
+            _name = State(initialValue: cat.name)
+            _gender = State(initialValue: cat.gender)
+            _birthDate = State(initialValue: cat.birthDate ?? Date())
+            _weight = State(initialValue: cat.weight.map { String($0) } ?? "")
+            if let avatarData = cat.avatar,
+               let image = UIImage(data: avatarData) {
+                _avatarImage = State(initialValue: image)
+            }
+        }
+    }
+    
+    var body: some View {
+        NavigationView {
+            Form {
+                Section(header: Text("基本信息")) {
+                    TextField("猫咪名字", text: $name)
+                    
+                    Picker("性别", selection: $gender) {
+                        Text("未选择").tag(Cat.Gender?.none)
+                        ForEach(Cat.Gender.allCases, id: \.self) { gender in
+                            Text(gender.rawValue).tag(Optional(gender))
+                        }
+                    }
+                    
+                    DatePicker("出生日期", selection: $birthDate, displayedComponents: .date)
+                    
+                    TextField("体重（kg）", text: $weight)
+                        .keyboardType(.decimalPad)
+                }
+                
+                Section(header: Text("头像")) {
+                    Button(action: { showImagePicker = true }) {
+                        HStack {
+                            Text("选择头像")
+                            Spacer()
+                            if let image = avatarImage {
+                                Image(uiImage: image)
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(height: 40)
+                                    .clipShape(Circle())
+                            }
+                        }
+                    }
+                }
+            }
+            .navigationTitle(editingCat == nil ? "添加猫咪" : "编辑猫咪")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("取消") {
+                        dismiss()
+                    }
+                }
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button(editingCat == nil ? "添加" : "保存") {
+                        saveCat()
+                    }
+                    .disabled(name.isEmpty)
+                }
+            }
+            .sheet(isPresented: $showImagePicker) {
+                ImagePicker(image: $avatarImage)
+            }
+        }
+    }
+    
+    private func saveCat() {
+        let cat = Cat(
+            id: editingCat?.id ?? UUID(),
+            name: name,
+            gender: gender,
+            birthDate: birthDate,
+            weight: Double(weight),
+            avatar: avatarImage?.jpegData(compressionQuality: Constants.ImageCompression.quality)
+        )
+        
+        withAnimation {
+            if editingCat != nil {
+                catDataManager.updateCat(cat)
+            } else {
+                catDataManager.addCat(cat)
+            }
+        }
+        
+        dismiss()
+    }
+} 
