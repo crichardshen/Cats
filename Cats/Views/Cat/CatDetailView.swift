@@ -2,11 +2,12 @@ import SwiftUI
 
 struct CatDetailView: View {
     @StateObject private var viewModel: CatDetailViewModel
-    @EnvironmentObject private var listViewModel: CatListViewModel
+    @ObservedObject var listViewModel: CatListViewModel
     @Environment(\.dismiss) private var dismiss
     
-    init(cat: Cat) {
+    init(cat: Cat, listViewModel: CatListViewModel) {
         _viewModel = StateObject(wrappedValue: CatDetailViewModel(cat: cat))
+        self.listViewModel = listViewModel
     }
     
     var body: some View {
@@ -59,7 +60,7 @@ private extension CatDetailView {
                     InfoRow(title: "性别", value: gender.rawValue)
                 }
                 if let birthDate = cat.birthDate {
-                    InfoRow(title: "出生日期", value: birthDate.formatted(date: .long, time: .omitted))
+                    InfoRow(title: "出生日期", value: birthDate.formattedYYYYMMDD())
                 }
                 if let weight = cat.weight {
                     InfoRow(title: "体重", value: String(format: "%.1f kg", weight))
@@ -111,7 +112,7 @@ private extension CatDetailView {
                 NavigationLink(destination: FeedingRecordListView(catId: cat.id)) {
                     FunctionCard(
                         title: "饮食记录",
-                        icon: "bowl.fill",
+                        icon: "fork.knife",
                         color: ThemeColors.forestGreen
                     )
                 }

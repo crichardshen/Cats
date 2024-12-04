@@ -19,9 +19,12 @@ struct AddWeightRecordView: View {
                         Text("kg")
                     }
                     
-                    DatePicker("记录时间",
-                              selection: $viewModel.timestamp,
-                              displayedComponents: [.date, .hourAndMinute])
+                    HStack {
+                        Text("时间")
+                        Spacer()
+                        Text(viewModel.timestamp.formattedYYYYMMDD())
+                            .foregroundColor(.gray)
+                    }
                 }
                 
                 Section(header: Text("备注")) {

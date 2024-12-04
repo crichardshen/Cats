@@ -9,7 +9,7 @@ struct FeedingRecordRow: View {
                 Text(record.foodBrand)
                     .font(.headline)
                 Spacer()
-                Text(record.timestamp.formatted(date: .abbreviated, time: .shortened))
+                Text(record.timestamp.formattedYYYYMMDD())
                     .font(.subheadline)
                     .foregroundColor(.gray)
             }

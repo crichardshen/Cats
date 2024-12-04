@@ -36,6 +36,7 @@
 				Info.plist,
 				Views/AddCatView.swift.bak,
 				Views/CatDetailView.swift.bak,
+				"Views/CatListView.swift .del",
 				Views/ContentView.swift.bak,
 			);
 			target = 2F7280062CFEF7F90065E0A3 /* Cats */;
@@ -49,6 +50,7 @@
 			membershipExceptions = (
 				Views/AddCatView.swift.bak,
 				Views/CatDetailView.swift.bak,
+				"Views/CatListView.swift .del",
 				Views/ContentView.swift.bak,
 			);
 		};

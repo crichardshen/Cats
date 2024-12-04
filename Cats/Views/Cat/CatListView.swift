@@ -2,30 +2,36 @@ import SwiftUI
 
 struct CatListView: View {
     @StateObject private var viewModel = CatListViewModel()
-    @State private var showingAddCat = false
+    @State private var showingAddSheet = false
     
     var body: some View {
-        ZStack {
-            ThemeColors.paleGreen
-                .ignoresSafeArea()
-            
-            VStack {
-                if viewModel.cats.isEmpty {
-                    EmptyStateView(showingAddCat: $showingAddCat)
-                } else {
-                    CatGridView(cats: viewModel.filteredCats)
+        NavigationView {
+            ZStack {
+                ThemeColors.paleGreen  // 添加背景色
+                    .ignoresSafeArea()
+                
+                ScrollView {
+                    if viewModel.cats.isEmpty {
+                        EmptyCatList(showingAddSheet: $showingAddSheet)
+                            .padding()
+                    } else {
+                        CatGridView(cats: viewModel.cats, listViewModel: viewModel)
+                            .padding()
+                    }
                 }
             }
-        }
-        .navigationTitle("我的猫咪")
-        .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
-                AddButton(showingAddCat: $showingAddCat)
+            .navigationTitle("我的猫咪")
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button {
+                        showingAddSheet = true
+                    } label: {
+                        Image(systemName: "plus.circle.fill")
+                            .foregroundColor(ThemeColors.forestGreen)
+                    }
+                }
             }
-        }
-        .searchable(text: $viewModel.searchText, prompt: "搜索猫咪")
-        .sheet(isPresented: $showingAddCat) {
-            if #available(iOS 16.0, *) {
+            .sheet(isPresented: $showingAddSheet) {
                 AddCatView { cat in
                     viewModel.addCat(cat)
                 }
@@ -35,7 +41,5 @@ struct CatListView: View {
 }
 
 #Preview {
-    NavigationView {
-        CatListView()
-    }
+    CatListView()
 } 

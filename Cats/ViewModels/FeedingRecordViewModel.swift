@@ -60,7 +60,7 @@ class FeedingRecordViewModel: ObservableObject {
             Calendar.current.startOfDay(for: record.timestamp)
         }
         return grouped.map { (date, records) in
-            (date.formatted(date: .long, time: .omitted), records)
+            (date.formattedYYYYMMDD(), records)
         }.sorted { $0.0 > $1.0 }
     }
     

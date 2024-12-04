@@ -51,7 +51,12 @@ private extension AddCatView {
                 }
             }
             
-            DatePicker("出生日期", selection: $viewModel.birthDate, displayedComponents: .date)
+            HStack {
+                Text("出生日期")
+                Spacer()
+                Text(viewModel.birthDate.formattedYYYYMMDD())
+                    .foregroundColor(.gray)
+            }
             
             TextField("体重（kg）", text: $viewModel.weight)
                 .keyboardType(.decimalPad)

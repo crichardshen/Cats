@@ -16,7 +16,7 @@ struct WeightRecordRow: View {
                 
                 Spacer()
                 
-                Text(record.timestamp.formatted(date: .abbreviated, time: .shortened))
+                Text(record.timestamp.formattedYYYYMMDD())
                     .font(.subheadline)
                     .foregroundColor(.gray)
             }

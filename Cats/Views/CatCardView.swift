@@ -2,9 +2,12 @@ import SwiftUI
 
 struct CatCardView: View {
     let cat: Cat
+    @ObservedObject var listViewModel: CatListViewModel
     
     var body: some View {
-        NavigationLink(destination: CatDetailView(cat: cat)) {
+        NavigationLink {
+            CatDetailView(cat: cat, listViewModel: listViewModel)
+        } label: {
             VStack {
                 CatAvatarView(avatarData: cat.avatar)
                     .frame(width: Constants.UI.avatarSize, height: Constants.UI.avatarSize)

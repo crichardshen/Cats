@@ -87,4 +87,12 @@ class CSVManager {
         
         return records
     }
+    
+    // 修改 CSV 导出时的日期格式
+    private func formatRecord(_ record: FeedingRecord) -> String {
+        return [
+            record.timestamp.formattedYYYYMMDD(),
+            // ... 其他字段
+        ].joined(separator: ",")
+    }
 } 

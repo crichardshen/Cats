@@ -4,6 +4,7 @@ import Foundation
 struct DailyMedicineInstance: Identifiable {
     let id: Int  // 第几次服用，从1开始
     let medicine: Medicine
+    let date: Date  // 添加日期信息
     var isCompleted: Bool
     var completedTime: Date?
 }
@@ -38,6 +39,18 @@ class MedicineViewModel: ObservableObject {
     
     func toggleInstanceLog(for medicine: Medicine, instanceId: Int, on date: Date = Date()) {
         let calendar = Calendar.current
+        let now = Date()
+        let startOfToday = calendar.startOfDay(for: now)
+        let startOfSelectedDate = calendar.startOfDay(for: date)
+        
+        // 如果是未来日期，不允许记录
+        guard startOfSelectedDate <= startOfToday else { return }
+        
+        // 如果超出药物的有效期，不允许记录
+        guard date >= medicine.startDate else { return }
+        if let endDate = medicine.endDate {
+            guard date <= endDate else { return }
+        }
         
         // 检查是否已有记录
         if let existingLog = findInstanceLog(medicineId: medicine.id, instanceId: instanceId, on: date) {
@@ -49,7 +62,7 @@ class MedicineViewModel: ObservableObject {
                 id: UUID(),
                 medicineId: medicine.id,
                 instanceId: instanceId,
-                timestamp: Date()
+                timestamp: date  // 使用选择的日期而不是当前时间
             )
             logs.append(log)
         }
@@ -112,6 +125,7 @@ class MedicineViewModel: ObservableObject {
                     return DailyMedicineInstance(
                         id: index,
                         medicine: medicine,
+                        date: date,
                         isCompleted: log != nil,
                         completedTime: log?.timestamp
                     )
@@ -121,6 +135,7 @@ class MedicineViewModel: ObservableObject {
                 return [DailyMedicineInstance(
                     id: 1,
                     medicine: medicine,
+                    date: date,
                     isCompleted: findLog(for: medicine, on: date) != nil,
                     completedTime: findLog(for: medicine, on: date)?.timestamp
                 )]

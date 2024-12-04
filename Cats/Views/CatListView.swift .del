@@ -1,0 +1,5 @@
+LazyVGrid(columns: columns, spacing: Constants.UI.gridSpacing) {
+    ForEach(viewModel.cats) { cat in
+        CatCardView(cat: cat, listViewModel: viewModel)
+    }
+} 

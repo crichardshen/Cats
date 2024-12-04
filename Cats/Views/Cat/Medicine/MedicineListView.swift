@@ -119,7 +119,7 @@ struct MedicineListView: View {
                 HStack {
                     Text("待执行项目")
                     Spacer()
-                    Text(selectedDate.formatted(date: .long, time: .omitted))
+                    Text(selectedDate.formattedYYYYMMDD())
                         .font(.caption)
                         .foregroundColor(.gray)
                 }
@@ -130,9 +130,7 @@ struct MedicineListView: View {
                 ForEach(viewModel.medicines) { medicine in
                     MedicineItemRow(
                         medicine: medicine,
-                        onEdit: {
-                            editingMedicine = medicine
-                        }
+                        logs: viewModel.logs
                     )
                     .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                         Button(role: .destructive) {
@@ -140,13 +138,20 @@ struct MedicineListView: View {
                         } label: {
                             Label("删除", systemImage: "trash")
                         }
+                        
+                        Button {
+                            editingMedicine = medicine
+                        } label: {
+                            Label("编辑", systemImage: "pencil")
+                        }
+                        .tint(ThemeColors.forestGreen)
                     }
                 }
             } header: {
                 HStack {
-                    Text("正在使用的药物")
+                    Text("使用中的药物")
                     Spacer()
-                    Text("← 左滑指定药物可删除")
+                    Text("← 左滑指定药物可编辑 / 删除")
                         .font(.caption)
                         .foregroundColor(.gray)
                 }
@@ -236,40 +241,70 @@ private struct MedicineRow: View {
 
 private struct MedicineItemRow: View {
     let medicine: Medicine
-    let onEdit: () -> Void
+    let logs: [MedicineLog]
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Text(medicine.name)
-                    .font(.headline)
-                Spacer()
-                Button(action: onEdit) {
-                    Image(systemName: "pencil.circle")
-                        .foregroundColor(ThemeColors.forestGreen)
+        NavigationLink {
+            MedicineStatsView(
+                medicine: medicine,
+                logs: logs.filter { $0.medicineId == medicine.id }
+            )
+        } label: {
+            VStack(alignment: .leading, spacing: 6) {
+                // 第一行：名称和类型
+                HStack(alignment: .center) {
+                    Text(medicine.name)
+                        .font(.headline)
+                        .foregroundColor(.primary)
+                    
+                    Text(medicine.type.rawValue)
+                        .font(.caption)
+                        .foregroundColor(.gray)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 2)
+                        .background(Color.gray.opacity(0.1))
+                        .cornerRadius(4)
                 }
-                Text(medicine.type.rawValue)
+                
+                // 第二行：使用频率
+                Text(medicine.frequency.description)
                     .font(.subheadline)
                     .foregroundColor(.gray)
+                
+                // 第三行：起始日期
+                HStack {
+                    Text("从 \(medicine.startDate.formattedYYYYMMDD()) 开始")
+                        .font(.caption)
+                        .foregroundColor(.gray)
+                    
+                    if let endDate = medicine.endDate {
+                        Text("至 \(endDate.formattedYYYYMMDD())")
+                            .font(.caption)
+                            .foregroundColor(.gray)
+                    }
+                }
+                
+                // 第四行：备注（如果有）
+                if let note = medicine.note {
+                    Text(note)
+                        .font(.caption)
+                        .foregroundColor(.gray)
+                        .lineLimit(1)
+                }
             }
-            
-            Text(medicine.frequency.description)
-                .font(.subheadline)
-                .foregroundColor(.gray)
-            
-            if let note = medicine.note {
-                Text(note)
-                    .font(.caption)
-                    .foregroundColor(.gray)
-            }
+            .padding(.vertical, 6)
         }
-        .padding(.vertical, 4)
     }
 }
 
 private struct MedicineInstanceRow: View {
     let instance: DailyMedicineInstance
     let onToggle: () -> Void
+    
+    private var isFutureDate: Bool {
+        let calendar = Calendar.current
+        return calendar.startOfDay(for: instance.date) > calendar.startOfDay(for: Date())
+    }
     
     var body: some View {
         HStack {
@@ -295,10 +330,18 @@ private struct MedicineInstanceRow: View {
             
             Spacer()
             
-            Button(action: onToggle) {
-                Image(systemName: instance.isCompleted ? "checkmark.circle.fill" : "circle")
-                    .foregroundColor(instance.isCompleted ? ThemeColors.forestGreen : .gray)
+            if isFutureDate {
+                // 未来日期显示禁用状态的圆圈
+                Image(systemName: "circle")
+                    .foregroundColor(.gray.opacity(0.5))
                     .imageScale(.large)
+            } else {
+                // 当前或过去日期显示可点击的按钮
+                Button(action: onToggle) {
+                    Image(systemName: instance.isCompleted ? "checkmark.circle.fill" : "circle")
+                        .foregroundColor(instance.isCompleted ? ThemeColors.forestGreen : .gray)
+                        .imageScale(.large)
+                }
             }
         }
         .contentShape(Rectangle())

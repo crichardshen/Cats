@@ -29,9 +29,12 @@ struct AddFeedingRecordView: View {
                 }
                 
                 Section(header: Text("时间")) {
-                    DatePicker("喂食时间",
-                              selection: $viewModel.timestamp,
-                              displayedComponents: [.date, .hourAndMinute])
+                    HStack {
+                        Text("时间")
+                        Spacer()
+                        Text(viewModel.timestamp.formattedYYYYMMDD())
+                            .foregroundColor(.gray)
+                    }
                 }
                 
                 Section(header: Text("备注")) {

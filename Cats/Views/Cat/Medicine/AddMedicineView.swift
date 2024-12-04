@@ -3,6 +3,8 @@ import SwiftUI
 struct AddMedicineView: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var viewModel: AddMedicineViewModel
+    @State private var showingStartDatePicker = false
+    @State private var showingEndDatePicker = false
     
     init(catId: UUID, editingMedicine: Medicine? = nil, onSave: @escaping (Medicine) -> Void) {
         _viewModel = StateObject(wrappedValue: AddMedicineViewModel(
@@ -25,9 +27,35 @@ struct AddMedicineView: View {
                         }
                     }
                     
-                    DatePicker("开始日期", selection: $viewModel.startDate, displayedComponents: .date)
+                    // 开始日期
+                    Button {
+                        showingStartDatePicker = true
+                    } label: {
+                        HStack {
+                            Text("开始日期")
+                            Spacer()
+                            Text(viewModel.startDate.formatted(date: .long, time: .omitted))
+                                .foregroundColor(.gray)
+                        }
+                    }
                     
-                    DatePicker("结束日期（可选）", selection: $viewModel.endDate, displayedComponents: .date)
+                    // 结束日期
+                    Toggle(isOn: $viewModel.hasEndDate) {
+                        Text("设置结束日期")
+                    }
+                    
+                    if viewModel.hasEndDate {
+                        Button {
+                            showingEndDatePicker = true
+                        } label: {
+                            HStack {
+                                Text("结束日期")
+                                Spacer()
+                                Text(viewModel.endDate.formatted(date: .long, time: .omitted))
+                                    .foregroundColor(.gray)
+                            }
+                        }
+                    }
                 }
                 
                 // 频率设置
@@ -56,6 +84,39 @@ struct AddMedicineView: View {
                     .disabled(!viewModel.canSave)
                 }
             }
+            .sheet(isPresented: $showingStartDatePicker) {
+                DatePicker(
+                    "选择开始日期",
+                    selection: $viewModel.startDate,
+                    displayedComponents: .date
+                )
+                .datePickerStyle(.graphical)
+                .onChange(of: viewModel.startDate) { _ in
+                    showingStartDatePicker = false
+                }
+                .presentationDetents([.medium])
+                .padding()
+            }
+            .sheet(isPresented: $showingEndDatePicker) {
+                DatePicker(
+                    "选择结束日期",
+                    selection: $viewModel.endDate,
+                    displayedComponents: .date
+                )
+                .datePickerStyle(.graphical)
+                .onChange(of: viewModel.endDate) { _ in
+                    showingEndDatePicker = false
+                }
+                .presentationDetents([.medium])
+                .padding()
+            }
         }
+    }
+}
+
+// 添加这个扩展来隐藏键盘/日期选择器
+extension View {
+    func hideKeyboard() {
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
     }
 } 
