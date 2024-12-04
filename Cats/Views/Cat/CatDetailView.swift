@@ -115,6 +115,14 @@ private extension CatDetailView {
                         color: ThemeColors.forestGreen
                     )
                 }
+                
+                NavigationLink(destination: WeightRecordListView(catId: cat.id)) {
+                    FunctionCard(
+                        title: "体重管理",
+                        icon: "scalemass.fill",
+                        color: ThemeColors.forestGreen
+                    )
+                }
                 // 其他功能卡片将在后续添加...
             }
             .padding(.horizontal)

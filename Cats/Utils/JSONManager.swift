@@ -81,6 +81,41 @@ class JSONManager {
         }
     }
     
+    // MARK: - 体重记录
+    func saveWeightRecords(_ records: [WeightRecord], forCat catId: UUID) {
+        let filename = "weight_records_\(catId.uuidString)"
+        let path = getFilePath(for: filename)
+        
+        do {
+            let encoder = JSONEncoder()
+            encoder.dateEncodingStrategy = .iso8601
+            let data = try encoder.encode(records)
+            try data.write(to: URL(fileURLWithPath: path))
+            print("Successfully saved weight records to: \(path)")
+        } catch {
+            print("Failed to save weight records: \(error)")
+        }
+    }
+    
+    func loadWeightRecords(forCat catId: UUID) -> [WeightRecord] {
+        let filename = "weight_records_\(catId.uuidString)"
+        let path = getFilePath(for: filename)
+        
+        guard fileManager.fileExists(atPath: path),
+              let data = try? Data(contentsOf: URL(fileURLWithPath: path)) else {
+            return []
+        }
+        
+        do {
+            let decoder = JSONDecoder()
+            decoder.dateDecodingStrategy = .iso8601
+            return try decoder.decode([WeightRecord].self, from: data)
+        } catch {
+            print("Failed to load weight records: \(error)")
+            return []
+        }
+    }
+    
     private func getFilePath(for filename: String) -> String {
         (documentsPath as NSString).appendingPathComponent("\(filename).json")
     }
