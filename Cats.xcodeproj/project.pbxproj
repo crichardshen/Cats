@@ -34,34 +34,16 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
-				Views/AddCatView.swift.bak,
-				Views/CatDetailView.swift.bak,
-				"Views/CatListView.swift .del",
-				Views/ContentView.swift.bak,
 			);
 			target = 2F7280062CFEF7F90065E0A3 /* Cats */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
-
-/* Begin PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
-		2F7280512CFF09890065E0A3 /* Exceptions for "Cats" folder in "Compile Sources" phase from "Cats" target */ = {
-			isa = PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet;
-			buildPhase = 2F7280032CFEF7F90065E0A3 /* Sources */;
-			membershipExceptions = (
-				Views/AddCatView.swift.bak,
-				Views/CatDetailView.swift.bak,
-				"Views/CatListView.swift .del",
-				Views/ContentView.swift.bak,
-			);
-		};
-/* End PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		2F7280092CFEF7F90065E0A3 /* Cats */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
 				2F72802F2CFEF7FA0065E0A3 /* Exceptions for "Cats" folder in "Cats" target */,
-				2F7280512CFF09890065E0A3 /* Exceptions for "Cats" folder in "Compile Sources" phase from "Cats" target */,
 			);
 			path = Cats;
 			sourceTree = "<group>";

@@ -5,6 +5,7 @@ import PhotosUI
 struct AddCatView: View {
     @StateObject private var viewModel: AddCatViewModel
     @Environment(\.dismiss) private var dismiss
+    @State private var showingBirthDatePicker = false
     var onSave: (Cat) -> Void
     
     init(editingCat: Cat? = nil, onSave: @escaping (Cat) -> Void) {
@@ -51,11 +52,28 @@ private extension AddCatView {
                 }
             }
             
-            HStack {
-                Text("出生日期")
-                Spacer()
-                Text(viewModel.birthDate.formattedYYYYMMDD())
-                    .foregroundColor(.gray)
+            Button {
+                showingBirthDatePicker = true
+            } label: {
+                HStack {
+                    Text("出生日期")
+                    Spacer()
+                    Text(viewModel.birthDate.formattedYYYYMMDD())
+                        .foregroundColor(.gray)
+                }
+            }
+            .sheet(isPresented: $showingBirthDatePicker) {
+                DatePicker(
+                    "选择出生日期",
+                    selection: $viewModel.birthDate,
+                    displayedComponents: .date
+                )
+                .datePickerStyle(.graphical)
+                .onChange(of: viewModel.birthDate) { _ in
+                    showingBirthDatePicker = false
+                }
+                .presentationDetents([.medium])
+                .padding()
             }
             
             TextField("体重（kg）", text: $viewModel.weight)

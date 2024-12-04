@@ -5,41 +5,42 @@ struct CatListView: View {
     @State private var showingAddSheet = false
     
     var body: some View {
-        NavigationView {
-            ZStack {
-                ThemeColors.paleGreen  // 添加背景色
-                    .ignoresSafeArea()
-                
-                ScrollView {
-                    if viewModel.cats.isEmpty {
-                        EmptyCatList(showingAddSheet: $showingAddSheet)
-                            .padding()
-                    } else {
-                        CatGridView(cats: viewModel.cats, listViewModel: viewModel)
-                            .padding()
-                    }
+        ZStack {
+            ThemeColors.paleGreen
+                .ignoresSafeArea()
+            
+            ScrollView {
+                if viewModel.cats.isEmpty {
+                    EmptyCatList(showingAddSheet: $showingAddSheet)
+                        .padding()
+                } else {
+                    CatGridView(cats: viewModel.cats, listViewModel: viewModel)
+                        .padding()
                 }
             }
-            .navigationTitle("我的猫咪")
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button {
-                        showingAddSheet = true
-                    } label: {
-                        Image(systemName: "plus.circle.fill")
-                            .foregroundColor(ThemeColors.forestGreen)
-                    }
+        }
+        .navigationTitle("我的宠物")
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button {
+                    showingAddSheet = true
+                } label: {
+                    Text("添加宠物")
+                        .font(.subheadline)
+                        .foregroundColor(ThemeColors.forestGreen)
                 }
             }
-            .sheet(isPresented: $showingAddSheet) {
-                AddCatView { cat in
-                    viewModel.addCat(cat)
-                }
+        }
+        .sheet(isPresented: $showingAddSheet) {
+            AddCatView { cat in
+                viewModel.addCat(cat)
             }
         }
     }
 }
 
 #Preview {
-    CatListView()
+    NavigationView {
+        CatListView()
+    }
 } 

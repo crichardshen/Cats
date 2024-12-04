@@ -36,7 +36,7 @@ struct CatDetailView: View {
                 viewModel.cat = updatedCat
             }
         }
-        .alert("删除猫咪", isPresented: $viewModel.showingDeleteAlert) {
+        .alert("删除宠物", isPresented: $viewModel.showingDeleteAlert) {
             Button("取消", role: .cancel) { }
             Button("删除", role: .destructive) {
                 listViewModel.deleteCat(viewModel.cat)
