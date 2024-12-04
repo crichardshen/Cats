@@ -2,14 +2,16 @@ import SwiftUI
 
 struct MedicineListView: View {
     @StateObject private var viewModel: MedicineViewModel
+    @ObservedObject var listViewModel: CatListViewModel
     @State private var showingAddMedicine = false
     @State private var selectedDate = Date()
     @State private var showingDatePicker = false
     @State private var editingMedicine: Medicine? = nil
     @State private var medicineToDelete: Medicine? = nil
     
-    init(catId: UUID) {
+    init(catId: UUID, listViewModel: CatListViewModel) {
         _viewModel = StateObject(wrappedValue: MedicineViewModel(catId: catId))
+        self.listViewModel = listViewModel
     }
     
     var body: some View {
@@ -199,6 +201,11 @@ struct MedicineListView: View {
             }
         } message: {
             Text("该药物将从待执行项目中删除，是否仍要删除该药物")
+        }
+        .onAppear {
+            viewModel.onStatusChanged = { [weak listViewModel] in
+                listViewModel?.refreshMedicineStatus()
+            }
         }
     }
 }

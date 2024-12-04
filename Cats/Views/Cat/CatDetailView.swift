@@ -18,7 +18,7 @@ struct CatDetailView: View {
                 
                 InfoCard(cat: viewModel.cat)
                 
-                FunctionCards(cat: viewModel.cat)
+                FunctionCards(cat: viewModel.cat, listViewModel: listViewModel)
             }
         }
         .navigationTitle(viewModel.cat.name)
@@ -106,6 +106,19 @@ private extension CatDetailView {
     
     struct FunctionCards: View {
         let cat: Cat
+        let listViewModel: CatListViewModel
+        @ObservedObject var medicineViewModel: MedicineViewModel
+        
+        init(cat: Cat, listViewModel: CatListViewModel) {
+            self.cat = cat
+            self.listViewModel = listViewModel
+            _medicineViewModel = ObservedObject(wrappedValue: MedicineViewModel(catId: cat.id))
+        }
+        
+        private var hasUncompletedMedicines: Bool {
+            let todayMedicines = medicineViewModel.medicinesForDate(Date())
+            return todayMedicines.contains { !$0.isCompleted }
+        }
         
         var body: some View {
             VStack(spacing: 15) {
@@ -113,7 +126,8 @@ private extension CatDetailView {
                     FunctionCard(
                         title: "饮食记录",
                         icon: "fork.knife",
-                        color: ThemeColors.forestGreen
+                        color: ThemeColors.forestGreen,
+                        showNotification: false
                     )
                 }
                 
@@ -121,18 +135,19 @@ private extension CatDetailView {
                     FunctionCard(
                         title: "体重管理",
                         icon: "scalemass.fill",
-                        color: ThemeColors.forestGreen
+                        color: ThemeColors.forestGreen,
+                        showNotification: false
                     )
                 }
                 
-                NavigationLink(destination: MedicineListView(catId: cat.id)) {
+                NavigationLink(destination: MedicineListView(catId: cat.id, listViewModel: listViewModel)) {
                     FunctionCard(
                         title: "医药管理",
                         icon: "cross.case.fill",
-                        color: ThemeColors.forestGreen
+                        color: ThemeColors.forestGreen,
+                        showNotification: hasUncompletedMedicines
                     )
                 }
-                // 其他功能卡片将在后续添加...
             }
             .padding(.horizontal)
         }
@@ -142,13 +157,22 @@ private extension CatDetailView {
         let title: String
         let icon: String
         let color: Color
+        let showNotification: Bool
         
         var body: some View {
             HStack {
                 Label(title, systemImage: icon)
                     .font(.headline)
                     .foregroundColor(color)
+                
+                if showNotification {
+                    Circle()
+                        .fill(ThemeColors.notificationRed)
+                        .frame(width: 8, height: 8)
+                }
+                
                 Spacer()
+                
                 Image(systemName: "chevron.right")
                     .foregroundColor(.gray)
             }

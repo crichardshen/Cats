@@ -19,8 +19,12 @@ struct CatListView: View {
                 }
             }
         }
-        .navigationTitle("我的宠物")
+        .navigationBarTitleDisplayMode(.inline)
         .toolbar {
+            ToolbarItem(placement: .principal) {
+                Text("我的宠物")
+                    .font(.headline)
+            }
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button {
                     showingAddSheet = true

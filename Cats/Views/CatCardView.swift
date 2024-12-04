@@ -8,15 +8,24 @@ struct CatCardView: View {
         NavigationLink {
             CatDetailView(cat: cat, listViewModel: listViewModel)
         } label: {
-            VStack {
-                CatAvatarView(avatarData: cat.avatar)
-                    .frame(width: Constants.UI.avatarSize, height: Constants.UI.avatarSize)
+            ZStack(alignment: .topTrailing) {
+                VStack {
+                    CatAvatarView(avatarData: cat.avatar)
+                        .frame(width: Constants.UI.avatarSize, height: Constants.UI.avatarSize)
+                    
+                    Text(cat.name)
+                        .font(.headline)
+                        .foregroundColor(.primary)
+                }
+                .cardStyle()
                 
-                Text(cat.name)
-                    .font(.headline)
-                    .foregroundColor(.primary)
+                if listViewModel.hasUncompletedMedicines(for: cat) {
+                    Circle()
+                        .fill(ThemeColors.notificationRed)
+                        .frame(width: 12, height: 12)
+                        .offset(x: -8, y: 8)
+                }
             }
-            .cardStyle()
         }
     }
 }

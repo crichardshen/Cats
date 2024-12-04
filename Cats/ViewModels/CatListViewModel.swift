@@ -3,6 +3,7 @@ import Foundation
 class CatListViewModel: ObservableObject {
     @Published var cats: [Cat] = []
     @Published var searchText = ""
+    private var medicineViewModels: [UUID: MedicineViewModel] = [:]
     
     init() {
         loadCats()
@@ -39,5 +40,18 @@ class CatListViewModel: ObservableObject {
             return cats
         }
         return cats.filter { $0.name.localizedCaseInsensitiveContains(searchText) }
+    }
+    
+    func hasUncompletedMedicines(for cat: Cat) -> Bool {
+        let viewModel = MedicineViewModel(catId: cat.id)
+        medicineViewModels[cat.id] = viewModel
+        
+        let todayMedicines = viewModel.medicinesForDate(Date())
+        return todayMedicines.contains { !$0.isCompleted }
+    }
+    
+    func refreshMedicineStatus() {
+        medicineViewModels.removeAll()
+        objectWillChange.send()
     }
 } 

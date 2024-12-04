@@ -13,6 +13,7 @@ class MedicineViewModel: ObservableObject {
     @Published var medicines: [Medicine] = []
     @Published var logs: [MedicineLog] = []
     let catId: UUID
+    var onStatusChanged: (() -> Void)?  // 添加回调
     
     init(catId: UUID) {
         self.catId = catId
@@ -27,14 +28,15 @@ class MedicineViewModel: ObservableObject {
     func addMedicine(_ medicine: Medicine) {
         medicines.append(medicine)
         saveMedicines()
+        onStatusChanged?()  // 添加这行，触发状态更新
     }
     
     func removeMedicine(_ medicine: Medicine) {
         medicines.removeAll { $0.id == medicine.id }
-        // 同时删除相关的记录
         logs.removeAll { $0.medicineId == medicine.id }
         saveMedicines()
         saveLogs()
+        onStatusChanged?()  // 添加这行，触发状态更新
     }
     
     func toggleInstanceLog(for medicine: Medicine, instanceId: Int, on date: Date = Date()) {
@@ -67,6 +69,7 @@ class MedicineViewModel: ObservableObject {
             logs.append(log)
         }
         saveLogs()
+        onStatusChanged?()  // 调用回调
     }
     
     func findLog(for medicine: Medicine, on date: Date) -> MedicineLog? {
@@ -156,6 +159,7 @@ class MedicineViewModel: ObservableObject {
         if let index = medicines.firstIndex(where: { $0.id == medicine.id }) {
             medicines[index] = medicine
             saveMedicines()
+            onStatusChanged?()  // 添加这行，触发状态更新
         }
     }
 } 
