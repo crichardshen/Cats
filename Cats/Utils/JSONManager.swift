@@ -116,6 +116,75 @@ class JSONManager {
         }
     }
     
+    // MARK: - 医药记录
+    func saveMedicines(_ medicines: [Medicine], forCat catId: UUID) {
+        let filename = "medicines_\(catId.uuidString)"
+        let path = getFilePath(for: filename)
+        
+        do {
+            let encoder = JSONEncoder()
+            encoder.dateEncodingStrategy = .iso8601
+            let data = try encoder.encode(medicines)
+            try data.write(to: URL(fileURLWithPath: path))
+            print("Successfully saved medicines to: \(path)")
+        } catch {
+            print("Failed to save medicines: \(error)")
+        }
+    }
+    
+    func loadMedicines(forCat catId: UUID) -> [Medicine] {
+        let filename = "medicines_\(catId.uuidString)"
+        let path = getFilePath(for: filename)
+        
+        guard fileManager.fileExists(atPath: path),
+              let data = try? Data(contentsOf: URL(fileURLWithPath: path)) else {
+            return []
+        }
+        
+        do {
+            let decoder = JSONDecoder()
+            decoder.dateDecodingStrategy = .iso8601
+            return try decoder.decode([Medicine].self, from: data)
+        } catch {
+            print("Failed to load medicines: \(error)")
+            return []
+        }
+    }
+    
+    func saveMedicineLogs(_ logs: [MedicineLog], forCat catId: UUID) {
+        let filename = "medicine_logs_\(catId.uuidString)"
+        let path = getFilePath(for: filename)
+        
+        do {
+            let encoder = JSONEncoder()
+            encoder.dateEncodingStrategy = .iso8601
+            let data = try encoder.encode(logs)
+            try data.write(to: URL(fileURLWithPath: path))
+            print("Successfully saved medicine logs to: \(path)")
+        } catch {
+            print("Failed to save medicine logs: \(error)")
+        }
+    }
+    
+    func loadMedicineLogs(forCat catId: UUID) -> [MedicineLog] {
+        let filename = "medicine_logs_\(catId.uuidString)"
+        let path = getFilePath(for: filename)
+        
+        guard fileManager.fileExists(atPath: path),
+              let data = try? Data(contentsOf: URL(fileURLWithPath: path)) else {
+            return []
+        }
+        
+        do {
+            let decoder = JSONDecoder()
+            decoder.dateDecodingStrategy = .iso8601
+            return try decoder.decode([MedicineLog].self, from: data)
+        } catch {
+            print("Failed to load medicine logs: \(error)")
+            return []
+        }
+    }
+    
     private func getFilePath(for filename: String) -> String {
         (documentsPath as NSString).appendingPathComponent("\(filename).json")
     }

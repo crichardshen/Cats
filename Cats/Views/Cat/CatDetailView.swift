@@ -123,6 +123,14 @@ private extension CatDetailView {
                         color: ThemeColors.forestGreen
                     )
                 }
+                
+                NavigationLink(destination: MedicineListView(catId: cat.id)) {
+                    FunctionCard(
+                        title: "医药管理",
+                        icon: "cross.case.fill",
+                        color: ThemeColors.forestGreen
+                    )
+                }
                 // 其他功能卡片将在后续添加...
             }
             .padding(.horizontal)
