@@ -14,7 +14,7 @@ extension CatEntity {
     @NSManaged public var avatar: Data?
     
     var wrappedName: String {
-        name ?? "未命名猫咪"
+        name ?? "未命名宠物"
     }
     
     var wrappedGender: Cat.Gender? {

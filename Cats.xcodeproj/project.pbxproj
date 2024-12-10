@@ -14,7 +14,9 @@
 		2FC199BE2D082BDC001CEA50 /* Exceptions for "Cats" folder in "CatS" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				"CatsApp.swift .bak",
 				CatsApp.swift.bak,
+				Views/CatListView.swift.bak,
 			);
 			target = 2FC4BF752D071C080078F5FB /* CatS */;
 		};
@@ -25,7 +27,9 @@
 			isa = PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet;
 			buildPhase = 2FC4BF722D071C080078F5FB /* Sources */;
 			membershipExceptions = (
+				"CatsApp.swift .bak",
 				CatsApp.swift.bak,
+				Views/CatListView.swift.bak,
 			);
 		};
 /* End PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */

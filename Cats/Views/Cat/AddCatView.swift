@@ -19,7 +19,7 @@ struct AddCatView: View {
                 basicInfoSection
                 avatarSection
             }
-            .navigationTitle(viewModel.isEditing ? "编辑猫咪" : "添加猫咪")
+            .navigationTitle(viewModel.isEditing ? "编辑宠物" : "添加宠物")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
@@ -43,7 +43,7 @@ struct AddCatView: View {
 private extension AddCatView {
     var basicInfoSection: some View {
         Section(header: Text("基本信息")) {
-            TextField("猫咪名字", text: $viewModel.name)
+            TextField("宠物名字", text: $viewModel.name)
             
             Picker("性别", selection: $viewModel.gender) {
                 Text("未选择").tag(Cat.Gender?.none)

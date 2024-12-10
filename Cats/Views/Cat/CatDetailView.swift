@@ -13,10 +13,17 @@ struct CatDetailView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: Constants.UI.gridSpacing) {
-                CatAvatarView(avatarData: viewModel.cat.avatar)
-                    .frame(width: Constants.UI.avatarSize * 1.5, height: Constants.UI.avatarSize * 1.5)
-                
-                InfoCard(cat: viewModel.cat)
+                VStack(spacing: 16) {
+                    CatAvatarView(avatarData: viewModel.cat.avatar)
+                        .frame(width: Constants.UI.avatarSize, height: Constants.UI.avatarSize)
+                    
+                    InfoCard(cat: viewModel.cat)
+                }
+                .cardStyle()
+                .padding(.horizontal)
+                .onTapGesture {
+                    viewModel.showingEditSheet = true
+                }
                 
                 FunctionCards(cat: viewModel.cat, listViewModel: listViewModel)
             }
@@ -66,8 +73,6 @@ private extension CatDetailView {
                     InfoRow(title: "体重", value: String(format: "%.1f kg", weight))
                 }
             }
-            .cardStyle()
-            .padding(.horizontal)
         }
     }
     

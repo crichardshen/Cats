@@ -9,10 +9,10 @@ struct EmptyCatList: View {
                 .font(.system(size: 60))
                 .foregroundColor(ThemeColors.forestGreen)
             
-            Text("还没有添加猫咪")
+            Text("还没有添加宠物")
                 .font(.headline)
             
-            Text("点击右上角的"+"添加您的第一只猫咪")
+            Text("点击以下按钮添加你的第一只宠物")
                 .font(.subheadline)
                 .foregroundColor(.gray)
                 .multilineTextAlignment(.center)
@@ -20,7 +20,7 @@ struct EmptyCatList: View {
             Button {
                 showingAddSheet = true
             } label: {
-                Text("添加猫咪")
+                Text("添加宠物")
                     .font(.headline)
                     .foregroundColor(.white)
                     .padding()
