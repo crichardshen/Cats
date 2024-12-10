@@ -5,7 +5,10 @@ import PhotosUI
 
 @available(iOS 16.0, *)
 class AddCatViewModel: ObservableObject {
+    private let catId: UUID
     private let editingCat: Cat?
+    private let onSave: (Cat) -> Void
+    let onImportSuccess: (() -> Void)?
     
     @Published var name = ""
     @Published var gender: Cat.Gender?
@@ -16,11 +19,17 @@ class AddCatViewModel: ObservableObject {
         didSet { handleImageSelection() }
     }
     
+    let existingCats: [Cat]
+    
     var isEditing: Bool { editingCat != nil }
     var canSave: Bool { !name.isEmpty }
     
-    init(editingCat: Cat? = nil) {
+    init(editingCat: Cat? = nil, existingCats: [Cat] = [], onSave: @escaping (Cat) -> Void, onImportSuccess: (() -> Void)? = nil) {
         self.editingCat = editingCat
+        self.existingCats = existingCats
+        self.onSave = onSave
+        self.onImportSuccess = onImportSuccess
+        self.catId = editingCat?.id ?? UUID()
         
         if let cat = editingCat {
             self.name = cat.name

@@ -4,6 +4,8 @@ struct CatDetailView: View {
     @StateObject private var viewModel: CatDetailViewModel
     @ObservedObject var listViewModel: CatListViewModel
     @Environment(\.dismiss) private var dismiss
+    @State private var showingExportResult = false
+    @State private var exportedFileURL: URL?
     
     init(cat: Cat, listViewModel: CatListViewModel) {
         _viewModel = StateObject(wrappedValue: CatDetailViewModel(cat: cat))
@@ -25,7 +27,16 @@ struct CatDetailView: View {
                     viewModel.showingEditSheet = true
                 }
                 
-                FunctionCards(cat: viewModel.cat, listViewModel: listViewModel)
+                FunctionCards(
+                    cat: viewModel.cat,
+                    listViewModel: listViewModel,
+                    onExport: {
+                        if let fileURL = ExportManager.shared.exportCatData(viewModel.cat) {
+                            exportedFileURL = fileURL
+                            showingExportResult = true
+                        }
+                    }
+                )
             }
         }
         .navigationTitle(viewModel.cat.name)
@@ -33,15 +44,26 @@ struct CatDetailView: View {
             ToolbarItem(placement: .navigationBarTrailing) {
                 CatDetailMenu(
                     showingEditSheet: $viewModel.showingEditSheet,
-                    showingDeleteAlert: $viewModel.showingDeleteAlert
+                    showingDeleteAlert: $viewModel.showingDeleteAlert,
+                    onExport: {
+                        if let fileURL = ExportManager.shared.exportCatData(viewModel.cat) {
+                            exportedFileURL = fileURL
+                            showingExportResult = true
+                        }
+                    }
                 )
             }
         }
         .sheet(isPresented: $viewModel.showingEditSheet) {
-            AddCatView(editingCat: viewModel.cat) { updatedCat in
-                listViewModel.updateCat(updatedCat)
-                viewModel.cat = updatedCat
-            }
+            AddCatView(
+                editingCat: viewModel.cat,
+                existingCats: listViewModel.cats,
+                isPresented: $viewModel.showingEditSheet,
+                onSave: { updatedCat in
+                    listViewModel.updateCat(updatedCat)
+                    viewModel.cat = updatedCat
+                }
+            )
         }
         .alert("删除宠物", isPresented: $viewModel.showingDeleteAlert) {
             Button("取消", role: .cancel) { }
@@ -51,6 +73,20 @@ struct CatDetailView: View {
             }
         } message: {
             Text("确定要删除\(viewModel.cat.name)吗？此操作不可撤销。")
+        }
+        .alert("导出成功", isPresented: $showingExportResult) {
+            Button("在文件中查看") {
+                if let url = exportedFileURL,
+                   let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+                   let rootViewController = windowScene.windows.first?.rootViewController {
+                    ExportManager.shared.showInFiles(url, from: rootViewController)
+                }
+            }
+            Button("确定", role: .cancel) { }
+        } message: {
+            if let url = exportedFileURL {
+                Text("文件已导出到：\n\(url.path)")
+            }
         }
     }
 }
@@ -79,18 +115,31 @@ private extension CatDetailView {
     struct CatDetailMenu: View {
         @Binding var showingEditSheet: Bool
         @Binding var showingDeleteAlert: Bool
+        var onExport: () -> Void
         
         var body: some View {
             Menu {
-                Button("编辑") {
+                Button {
                     showingEditSheet = true
+                } label: {
+                    Label("编辑", systemImage: "pencil")
                 }
-                Button("删除", role: .destructive) {
+                
+                Button {
+                    onExport()
+                } label: {
+                    Label("导出数据", systemImage: "square.and.arrow.up")
+                }
+                
+                Button(role: .destructive) {
                     showingDeleteAlert = true
+                } label: {
+                    Label("删除", systemImage: "trash")
                 }
             } label: {
                 Image(systemName: "ellipsis.circle")
                     .foregroundColor(ThemeColors.forestGreen)
+                    .imageScale(.large)
             }
         }
     }
@@ -113,10 +162,12 @@ private extension CatDetailView {
         let cat: Cat
         let listViewModel: CatListViewModel
         @ObservedObject var medicineViewModel: MedicineViewModel
+        var onExport: () -> Void
         
-        init(cat: Cat, listViewModel: CatListViewModel) {
+        init(cat: Cat, listViewModel: CatListViewModel, onExport: @escaping () -> Void) {
             self.cat = cat
             self.listViewModel = listViewModel
+            self.onExport = onExport
             _medicineViewModel = ObservedObject(wrappedValue: MedicineViewModel(catId: cat.id))
         }
         
@@ -151,6 +202,15 @@ private extension CatDetailView {
                         icon: "cross.case.fill",
                         color: ThemeColors.forestGreen,
                         showNotification: hasUncompletedMedicines
+                    )
+                }
+                
+                Button(action: onExport) {
+                    FunctionCard(
+                        title: "导出数据",
+                        icon: "square.and.arrow.up",
+                        color: ThemeColors.forestGreen,
+                        showNotification: false
                     )
                 }
             }

@@ -10,7 +10,7 @@ class CatListViewModel: ObservableObject {
         JSONManager.shared.printDocumentsPath()
     }
     
-    private func loadCats() {
+    func loadCats() {
         cats = JSONManager.shared.loadCats()
     }
     

@@ -5,17 +5,43 @@ import PhotosUI
 struct AddCatView: View {
     @StateObject private var viewModel: AddCatViewModel
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.window) private var window
     @State private var showingBirthDatePicker = false
-    var onSave: (Cat) -> Void
+    @State private var showingImportPicker = false
+    @State private var showingImportError = false
+    @Binding var isPresented: Bool
+    @State private var pendingImport = false
+    let onSave: (Cat) -> Void
     
-    init(editingCat: Cat? = nil, onSave: @escaping (Cat) -> Void) {
-        _viewModel = StateObject(wrappedValue: AddCatViewModel(editingCat: editingCat))
+    // 添加一个静态属性来保持 ViewModel 的引用
+    private static var importingViewModel: AddCatViewModel?
+    
+    init(editingCat: Cat? = nil, existingCats: [Cat] = [], isPresented: Binding<Bool>, onSave: @escaping (Cat) -> Void) {
+        let viewModel = AddCatViewModel(
+            editingCat: editingCat,
+            existingCats: existingCats,
+            onSave: onSave,
+            onImportSuccess: {
+                NotificationCenter.default.post(name: NSNotification.Name("RefreshCatList"), object: nil)
+            }
+        )
+        _viewModel = StateObject(wrappedValue: viewModel)
+        _isPresented = isPresented
         self.onSave = onSave
     }
     
     var body: some View {
         NavigationView {
             Form {
+                Section {
+                    Button("从文件导入") {
+                        // 保存 ViewModel 的引用
+                        Self.importingViewModel = viewModel
+                        pendingImport = true
+                        isPresented = false
+                    }
+                }
+                
                 basicInfoSection
                 avatarSection
             }
@@ -33,6 +59,49 @@ struct AddCatView: View {
                         dismiss()
                     }
                     .disabled(!viewModel.canSave)
+                }
+            }
+        }
+        .onChange(of: isPresented) { newValue in
+            if !newValue && pendingImport {
+                pendingImport = false
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    if let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+                       let rootViewController = scene.windows.first?.rootViewController {
+                        print("开始选择文件...")
+                        ExportManager.shared.showFilePicker(from: rootViewController) { url in
+                            print("文件选择完成，URL: \(String(describing: url))")
+                            
+                            guard let url = url else {
+                                print("没有选择文件")
+                                Self.importingViewModel = nil  // 清理引用
+                                return
+                            }
+                            
+                            DispatchQueue.main.async {
+                                print("开始导入文件...")
+                                if let viewModel = Self.importingViewModel {  // 使用保存的引用
+                                    print("开始处理导入...")
+                                    let success = ExportManager.shared.importCatData(from: url, existingCats: viewModel.existingCats)
+                                    print("导入结果: \(success)")
+                                    if success {
+                                        viewModel.onImportSuccess?()
+                                    } else {
+                                        let alertController = UIAlertController(
+                                            title: "导入失败",
+                                            message: "无法导入选择的文件，请确保文件格式正确。",
+                                            preferredStyle: .alert
+                                        )
+                                        alertController.addAction(UIAlertAction(title: "确定", style: .default))
+                                        rootViewController.present(alertController, animated: true)
+                                    }
+                                } else {
+                                    print("ViewModel 已被释放")
+                                }
+                                Self.importingViewModel = nil  // 清理引用
+                            }
+                        }
+                    }
                 }
             }
         }

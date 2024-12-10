@@ -40,8 +40,21 @@ struct CatListView: View {
             }
         }
         .sheet(isPresented: $showingAddSheet) {
-            AddCatView { cat in
-                viewModel.addCat(cat)
+            AddCatView(
+                existingCats: viewModel.cats,
+                isPresented: $showingAddSheet,
+                onSave: { cat in
+                    viewModel.addCat(cat)
+                }
+            )
+        }
+        .onAppear {
+            NotificationCenter.default.addObserver(
+                forName: NSNotification.Name("RefreshCatList"),
+                object: nil,
+                queue: .main
+            ) { _ in
+                viewModel.loadCats()
             }
         }
     }
