@@ -17,10 +17,10 @@ struct Medicine: Identifiable, Codable {
     }
     
     enum Frequency: Codable {
-        case daily(times: Int)      // 每天几次
-        case weekly(days: [Int])    // 每周几（1-7）
-        case monthly(days: [Int])   // 每月几号
-        case custom(interval: Int)  // 每隔几天
+        case daily(times: Int)
+        case weekly(days: [Int])
+        case monthly(days: [Int])
+        case custom(years: Int, months: Int, days: Int, hours: Int)
         
         var description: String {
             switch self {
@@ -31,8 +31,41 @@ struct Medicine: Identifiable, Codable {
                 return "每周" + days.map { weekDays[$0 - 1] }.joined(separator: "、")
             case .monthly(let days):
                 return "每月" + days.map { "\($0)号" }.joined(separator: "、")
-            case .custom(let interval):
-                return "每\(interval)天一次"
+            case .custom(let years, let months, let days, let hours):
+                var parts: [String] = []
+                if years > 0 { parts.append("\(years)年") }
+                if months > 0 { parts.append("\(months)月") }
+                if days > 0 { parts.append("\(days)天") }
+                if hours > 0 { parts.append("\(hours)小时") }
+                return "每隔" + parts.joined()
+            }
+        }
+        
+        func nextOccurrence(after date: Date = Date()) -> Date? {
+            let calendar = Calendar.current
+            let now = date
+            
+            switch self {
+            case .custom(let years, let months, let days, let hours):
+                var dateComponents = DateComponents()
+                dateComponents.year = years
+                dateComponents.month = months
+                dateComponents.day = days
+                dateComponents.hour = hours
+                
+                let roundedHour = calendar.date(
+                    bySetting: .minute,
+                    value: 0,
+                    of: calendar.date(
+                        bySetting: .second,
+                        value: 0,
+                        of: now
+                    ) ?? now
+                ) ?? now
+                
+                return calendar.date(byAdding: dateComponents, to: roundedHour)
+            default:
+                return nil
             }
         }
     }

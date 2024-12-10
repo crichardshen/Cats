@@ -27,8 +27,8 @@ class AddMedicineViewModel: ObservableObject {
             return !days.isEmpty
         case .monthly(let days):
             return !days.isEmpty
-        case .custom(let interval):
-            return interval > 0
+        case .custom(let years, let months, let days, let hours):
+            return years > 0 || months > 0 || days > 0 || hours > 0
         }
     }
     

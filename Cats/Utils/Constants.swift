@@ -10,7 +10,7 @@ enum Constants {
         static let cornerRadius: CGFloat = 15
         static let shadowRadius: CGFloat = 3
         static let avatarSize: CGFloat = 120
-        static let gridSpacing: CGFloat = 20
+        static let gridSpacing: CGFloat = 16
         static let animationDuration: Double = 0.3
     }
     

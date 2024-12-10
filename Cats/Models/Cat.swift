@@ -9,7 +9,7 @@ struct Cat: Identifiable, Codable {
     var avatar: Data?
     
     enum Gender: String, Codable, CaseIterable {
-        case male = "公猫"
-        case female = "母猫"
+        case male = "公"
+        case female = "母"
     }
 } 

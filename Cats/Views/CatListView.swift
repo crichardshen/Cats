@@ -18,6 +18,7 @@ struct CatListView: View {
                         .padding()
                 }
             }
+            .scrollContentBackground(.hidden)
         }
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {

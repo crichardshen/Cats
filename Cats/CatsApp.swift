@@ -6,17 +6,17 @@ struct CatsApp: App {
     
     var body: some Scene {
         WindowGroup {
-            ZStack {
-                NavigationView {
+            NavigationView {
+                ZStack {
                     CatListView()
+                    
+                    if isShowingLaunchScreen {
+                        LaunchScreen()
+                            .transition(.opacity)
+                            .zIndex(1)
+                    }
                 }
                 .navigationViewStyle(.stack)
-                
-                if isShowingLaunchScreen {
-                    LaunchScreen()
-                        .transition(.opacity)
-                        .zIndex(1)
-                }
             }
             .preferredColorScheme(.light)
             .onAppear {

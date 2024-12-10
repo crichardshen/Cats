@@ -1,0 +1,41 @@
+//
+//  CatSApp.swift
+//  CatS
+//
+//  Created by SanRan on 2024/12/9.
+//
+
+import SwiftUI
+
+@main
+struct CatsApp: App {
+    @State private var isShowingLaunchScreen = true
+    var body: some Scene {
+        WindowGroup {
+            NavigationStack {
+                ZStack {
+                    NavigationStack {
+                        CatListView()
+                            .edgesIgnoringSafeArea(.all)
+                    }
+                    
+                    if isShowingLaunchScreen {
+                        LaunchScreen()
+                            .transition(.opacity)
+                            .zIndex(1)
+                    }
+                }
+                .background(ThemeColors.paleGreen)
+                .edgesIgnoringSafeArea(.all)
+                .preferredColorScheme(.light)
+                .onAppear {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                        withAnimation(.easeInOut(duration: Constants.UI.animationDuration)) {
+                            isShowingLaunchScreen = false
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

@@ -54,9 +54,17 @@ struct MedicineStatsView: View {
         case .monthly(let days):
             let day = calendar.component(.day, from: date)
             return days.contains(day)
-        case .custom(let interval):
-            let days = calendar.dateComponents([.day], from: medicine.startDate, to: date).day ?? 0
-            return days % interval == 0
+        case .custom(let years, let months, let days, let hours):
+            // 计算时间间隔（转换为秒）
+            var interval: TimeInterval = 0
+            interval += TimeInterval(years * 365 * 24 * 3600)
+            interval += TimeInterval(months * 30 * 24 * 3600)
+            interval += TimeInterval(days * 24 * 3600)
+            interval += TimeInterval(hours * 3600)
+            
+            // 计算从开始日期到目标日期经过了多少个完整间隔
+            let elapsedTime = date.timeIntervalSince(medicine.startDate)
+            return elapsedTime.truncatingRemainder(dividingBy: interval) == 0
         }
     }
     

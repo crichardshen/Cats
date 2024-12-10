@@ -115,9 +115,28 @@ class MedicineViewModel: ObservableObject {
             case .monthly(let days):
                 let day = calendar.component(.day, from: date)
                 return days.contains(day)
-            case .custom(let interval):
-                let days = calendar.dateComponents([.day], from: startOfStartDate, to: startOfDay).day ?? 0
-                return days % interval == 0
+            case .custom(let years, let months, let days, let hours):
+                // 计算时间间隔（转换为秒）
+                var interval: TimeInterval = 0
+                interval += TimeInterval(years * 365 * 24 * 3600)
+                interval += TimeInterval(months * 30 * 24 * 3600)
+                interval += TimeInterval(days * 24 * 3600)
+                interval += TimeInterval(hours * 3600)
+                
+                // 计算从开始时间到目标日期的每个时间点
+                let calendar = Calendar.current
+                var currentTime = medicine.startDate
+                let endOfTargetDay = calendar.date(bySettingHour: 23, minute: 59, second: 59, of: date)!
+                
+                while currentTime <= endOfTargetDay {
+                    let startOfCurrentDay = calendar.startOfDay(for: currentTime)
+                    if calendar.isDate(startOfCurrentDay, inSameDayAs: date) {
+                        return true
+                    }
+                    // 添加间隔时间
+                    currentTime = currentTime.addingTimeInterval(interval)
+                }
+                return false
             }
         }.flatMap { medicine -> [DailyMedicineInstance] in
             // 如果是每日多次，创建多个实例

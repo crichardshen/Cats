@@ -6,8 +6,12 @@ struct FrequencyPicker: View {
     @State private var dailyTimes = 1
     @State private var weeklyDays: Set<Int> = []  // 改为空集合
     @State private var monthlyDays: Set<Int> = []  // 改为空集合
+    @State private var customYears = ""
+    @State private var customMonths = ""
+    @State private var customDays = ""
+    @State private var customHours = ""
     
-    private let frequencyTypes = ["每天", "每周", "每月"]  // 移除"自定义"选项
+    private let frequencyTypes = ["每天", "每周", "每月", "自定义"]  // 添加自定义选项
     private let weekDays = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"]
     
     var body: some View {
@@ -92,6 +96,18 @@ struct FrequencyPicker: View {
                     }
                 }
                 
+            case 3: // 自定义
+                CustomIntervalPicker(
+                    years: $customYears,
+                    months: $customMonths,
+                    days: $customDays,
+                    hours: $customHours
+                )
+                .onChange(of: customYears) { _ in updateCustomFrequency() }
+                .onChange(of: customMonths) { _ in updateCustomFrequency() }
+                .onChange(of: customDays) { _ in updateCustomFrequency() }
+                .onChange(of: customHours) { _ in updateCustomFrequency() }
+            
             default:
                 EmptyView()
             }
@@ -112,9 +128,12 @@ struct FrequencyPicker: View {
         case .monthly(let days):
             selectedType = 2
             monthlyDays = Set(days)
-        case .custom:  // 保留 case 以防有历史数据
-            selectedType = 0
-            dailyTimes = 1
+        case .custom(let years, let months, let days, let hours):
+            selectedType = 3
+            customYears = years > 0 ? String(years) : ""
+            customMonths = months > 0 ? String(months) : ""
+            customDays = days > 0 ? String(days) : ""
+            customHours = hours > 0 ? String(hours) : ""
         }
     }
     
@@ -126,8 +145,21 @@ struct FrequencyPicker: View {
             frequency = .weekly(days: Array(weeklyDays).sorted())
         case 2:
             frequency = .monthly(days: Array(monthlyDays).sorted())
+        case 3:
+            updateCustomFrequency()
         default:
             break
+        }
+    }
+    
+    private func updateCustomFrequency() {
+        let y = Int(customYears) ?? 0
+        let m = Int(customMonths) ?? 0
+        let d = Int(customDays) ?? 0
+        let h = Int(customHours) ?? 0
+        
+        if y > 0 || m > 0 || d > 0 || h > 0 {
+            frequency = .custom(years: y, months: m, days: d, hours: h)
         }
     }
 } 
