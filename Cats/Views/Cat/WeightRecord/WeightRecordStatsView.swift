@@ -4,6 +4,12 @@ import Charts
 struct WeightRecordStatsView: View {
     let statistics: WeightStatistics
     
+    // 获取最近一周的记录
+    private var lastWeekRecords: [WeightRecord] {
+        let oneWeekAgo = Calendar.current.date(byAdding: .day, value: -7, to: Date()) ?? Date()
+        return statistics.records.filter { $0.timestamp >= oneWeekAgo }
+    }
+    
     var body: some View {
         List {
             // 基本统计信息
@@ -26,9 +32,9 @@ struct WeightRecordStatsView: View {
             }
             
             // 体重变化趋势图
-            if !statistics.records.isEmpty {
-                Section(header: Text("变化趋势")) {
-                    WeightTrendChart(records: statistics.records)
+            if !lastWeekRecords.isEmpty {  // 使用最近一周的记录
+                Section(header: Text("一周变化趋势")) {  // 修改标题
+                    WeightTrendChart(records: lastWeekRecords)  // 传入最近一周的记录
                         .frame(height: 200)
                 }
             }
@@ -78,6 +84,13 @@ private struct StatRow: View {
 private struct WeightTrendChart: View {
     let records: [WeightRecord]
     
+    // 将日期格式化器移到这里
+    private let dateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "M-d"  // 使用 "月-日" 格式
+        return formatter
+    }()
+    
     var body: some View {
         Chart {
             ForEach(records) { record in
@@ -95,10 +108,12 @@ private struct WeightTrendChart: View {
             }
         }
         .chartXAxis {
-            AxisMarks(values: .stride(by: .day)) { _ in
-                AxisGridLine()
-                AxisTick()
-                AxisValueLabel(format: .dateTime.month().day())
+            AxisMarks(values: .stride(by: .day)) { value in
+                if let date = value.as(Date.self) {
+                    AxisValueLabel {
+                        Text(dateFormatter.string(from: date))
+                    }
+                }
             }
         }
         .chartYAxis {

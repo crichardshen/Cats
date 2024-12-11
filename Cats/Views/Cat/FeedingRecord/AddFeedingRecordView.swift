@@ -3,15 +3,20 @@ import SwiftUI
 struct AddFeedingRecordView: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var viewModel: AddFeedingRecordViewModel
+    @State private var showingDatePicker = false
     
     init(catId: UUID, editingRecord: FeedingRecord? = nil, onSave: @escaping (FeedingRecord) -> Void) {
-        _viewModel = StateObject(wrappedValue: AddFeedingRecordViewModel(catId: catId, editingRecord: editingRecord, onSave: onSave))
+        _viewModel = StateObject(wrappedValue: AddFeedingRecordViewModel(
+            catId: catId,
+            editingRecord: editingRecord,
+            onSave: onSave
+        ))
     }
     
     var body: some View {
         NavigationView {
             Form {
-                Section(header: Text("食物信息")) {
+                Section(header: Text("基本信息")) {
                     TextField("品牌", text: $viewModel.foodBrand)
                     
                     Picker("类型", selection: $viewModel.foodType) {
@@ -20,20 +25,18 @@ struct AddFeedingRecordView: View {
                         }
                     }
                     
-                    HStack {
-                        Text("数量")
-                        TextField("克", text: $viewModel.amount)
-                            .keyboardType(.decimalPad)
-                        Text("g")
-                    }
-                }
-                
-                Section(header: Text("时间")) {
-                    HStack {
-                        Text("时间")
-                        Spacer()
-                        Text(viewModel.timestamp.formattedYYYYMMDD())
-                            .foregroundColor(.gray)
+                    TextField("数量（克）", text: $viewModel.amount)
+                        .keyboardType(.decimalPad)
+                    
+                    Button {
+                        showingDatePicker = true
+                    } label: {
+                        HStack {
+                            Text("日期")
+                            Spacer()
+                            Text(viewModel.timestamp.formattedYYYYMMDD())
+                                .foregroundColor(.gray)
+                        }
                     }
                 }
                 
@@ -41,7 +44,7 @@ struct AddFeedingRecordView: View {
                     TextField("备注信息", text: $viewModel.note)
                 }
             }
-            .navigationTitle("添加喂食记录")
+            .navigationTitle(viewModel.isEditing ? "编辑记录" : "添加记录")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
@@ -57,6 +60,11 @@ struct AddFeedingRecordView: View {
                     .disabled(!viewModel.canSave)
                 }
             }
+            .localizedDatePickerSheet(
+                isPresented: $showingDatePicker,
+                date: $viewModel.timestamp,
+                title: Locale.isChineseEnvironment ? "选择日期" : "Select Date"
+            )
         }
     }
 } 

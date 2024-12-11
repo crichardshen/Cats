@@ -10,18 +10,23 @@ struct DailyMedicineInstance: Identifiable {
 }
 
 class MedicineViewModel: ObservableObject {
+    let catId: UUID
     @Published var medicines: [Medicine] = []
     @Published var logs: [MedicineLog] = []
-    let catId: UUID
-    var onStatusChanged: (() -> Void)?  // 添加回调
+    @Published var selectedDate = Date()  // 添加选中日期属性
+    var onStatusChanged: (() -> Void)?
     
     init(catId: UUID) {
         self.catId = catId
-        loadData()
+        loadMedicines()
+        loadLogs()
     }
     
-    private func loadData() {
+    private func loadMedicines() {
         medicines = JSONManager.shared.loadMedicines(forCat: catId)
+    }
+    
+    private func loadLogs() {
         logs = JSONManager.shared.loadMedicineLogs(forCat: catId)
     }
     
@@ -41,35 +46,39 @@ class MedicineViewModel: ObservableObject {
     
     func toggleInstanceLog(for medicine: Medicine, instanceId: Int, on date: Date = Date()) {
         let calendar = Calendar.current
-        let now = Date()
-        let startOfToday = calendar.startOfDay(for: now)
         let startOfSelectedDate = calendar.startOfDay(for: date)
-        
-        // 如果是未来日期，不允许记录
-        guard startOfSelectedDate <= startOfToday else { return }
-        
-        // 如果超出药物的有效期，不允许记录
-        guard date >= medicine.startDate else { return }
-        if let endDate = medicine.endDate {
-            guard date <= endDate else { return }
-        }
+        let startOfToday = calendar.startOfDay(for: Date())
         
         // 检查是否已有记录
         if let existingLog = findInstanceLog(medicineId: medicine.id, instanceId: instanceId, on: date) {
             // 如果已有记录，则删除（取消选中）
             logs.removeAll { $0.id == existingLog.id }
         } else {
-            // 如果没有记录，则添加新记录（选中）
-            let log = MedicineLog(
-                id: UUID(),
-                medicineId: medicine.id,
-                instanceId: instanceId,
-                timestamp: date  // 使用选择的日期而不是当前时间
-            )
-            logs.append(log)
+            // 检查是否在有效期内
+            let startDate = calendar.startOfDay(for: medicine.startDate)
+            let endDate = medicine.endDate.map { calendar.startOfDay(for: $0) }
+            
+            let isWithinDateRange = startOfSelectedDate >= startDate && 
+                (endDate == nil || startOfSelectedDate <= endDate!)
+            
+            // 检查是否是未来日期
+            let isFutureDate = startOfSelectedDate > startOfToday
+            
+            // 如果在有效期内且不是未来日期，则添加记录
+            if isWithinDateRange && !isFutureDate {
+                let log = MedicineLog(
+                    id: UUID(),
+                    medicineId: medicine.id,
+                    instanceId: instanceId,
+                    timestamp: date,
+                    note: nil
+                )
+                logs.append(log)
+            }
         }
+        
         saveLogs()
-        onStatusChanged?()  // 调用回调
+        onStatusChanged?()
     }
     
     func findLog(for medicine: Medicine, on date: Date) -> MedicineLog? {
@@ -91,75 +100,63 @@ class MedicineViewModel: ObservableObject {
     // 获取指定日期需要服用/注射的药物列表
     func medicinesForDate(_ date: Date) -> [DailyMedicineInstance] {
         let calendar = Calendar.current
-        let startOfDay = calendar.startOfDay(for: date)
+        let startOfSelectedDate = calendar.startOfDay(for: date)
+        let startOfToday = calendar.startOfDay(for: Date())
         
-        return medicines.filter { medicine in
-            // 将开始日期标准化到当天的开始时间
-            let startOfStartDate = calendar.startOfDay(for: medicine.startDate)
+        return medicines.flatMap { medicine -> [DailyMedicineInstance] in
+            // 检查日期是否在药物的有效期内
+            let startDate = calendar.startOfDay(for: medicine.startDate)
+            let endDate = medicine.endDate.map { calendar.startOfDay(for: $0) }
             
-            // 检查日期是否在有效范围内
-            guard startOfDay >= startOfStartDate else { return false }
-            if let endDate = medicine.endDate {
-                let startOfEndDate = calendar.startOfDay(for: endDate)
-                guard startOfDay <= startOfEndDate else { return false }
-            }
+            let isWithinDateRange = startOfSelectedDate >= startDate && 
+                (endDate == nil || startOfSelectedDate <= endDate!)
             
-            // 检查频率
+            guard isWithinDateRange else { return [] }
+            
+            // 根据频率创建实例
             switch medicine.frequency {
-            case .daily:
-                return true
-            case .weekly(let days):
-                // 获取周几（1是周日，2是周一，以此类推）
-                let weekday = calendar.component(.weekday, from: date)
-                return days.contains(weekday)
-            case .monthly(let days):
-                let day = calendar.component(.day, from: date)
-                return days.contains(day)
-            case .custom(let years, let months, let days, let hours):
-                // 计算时间间隔（转换为秒）
-                var interval: TimeInterval = 0
-                interval += TimeInterval(years * 365 * 24 * 3600)
-                interval += TimeInterval(months * 30 * 24 * 3600)
-                interval += TimeInterval(days * 24 * 3600)
-                interval += TimeInterval(hours * 3600)
-                
-                // 计算从开始时间到目标日期的每个时间点
-                let calendar = Calendar.current
-                var currentTime = medicine.startDate
-                let endOfTargetDay = calendar.date(bySettingHour: 23, minute: 59, second: 59, of: date)!
-                
-                while currentTime <= endOfTargetDay {
-                    let startOfCurrentDay = calendar.startOfDay(for: currentTime)
-                    if calendar.isDate(startOfCurrentDay, inSameDayAs: date) {
-                        return true
-                    }
-                    // 添加间隔时间
-                    currentTime = currentTime.addingTimeInterval(interval)
-                }
-                return false
-            }
-        }.flatMap { medicine -> [DailyMedicineInstance] in
-            // 如果是每日多次，创建多个实例
-            if case .daily(let times) = medicine.frequency {
-                return (1...times).map { index in
-                    let instanceId = "\(medicine.id)-\(index)"
-                    let log = findInstanceLog(medicineId: medicine.id, instanceId: index, on: date)
+            case .daily(let times):
+                return (1...times).map { instanceId in
+                    let log = findInstanceLog(medicineId: medicine.id, instanceId: instanceId, on: date)
                     return DailyMedicineInstance(
-                        id: index,
+                        id: instanceId,
                         medicine: medicine,
                         date: date,
                         isCompleted: log != nil,
                         completedTime: log?.timestamp
                     )
                 }
-            } else {
-                // 其他频率只创建一个实例
+                
+            case .weekly(let days):
+                let weekday = calendar.component(.weekday, from: date)
+                guard days.contains(weekday) else { return [] }
                 return [DailyMedicineInstance(
                     id: 1,
                     medicine: medicine,
                     date: date,
-                    isCompleted: findLog(for: medicine, on: date) != nil,
-                    completedTime: findLog(for: medicine, on: date)?.timestamp
+                    isCompleted: findInstanceLog(medicineId: medicine.id, instanceId: 1, on: date) != nil,
+                    completedTime: findInstanceLog(medicineId: medicine.id, instanceId: 1, on: date)?.timestamp
+                )]
+                
+            case .monthly(let days):
+                let day = calendar.component(.day, from: date)
+                guard days.contains(day) else { return [] }
+                return [DailyMedicineInstance(
+                    id: 1,
+                    medicine: medicine,
+                    date: date,
+                    isCompleted: findInstanceLog(medicineId: medicine.id, instanceId: 1, on: date) != nil,
+                    completedTime: findInstanceLog(medicineId: medicine.id, instanceId: 1, on: date)?.timestamp
+                )]
+                
+            case .custom:
+                // 暂时简单处理自定义频率，每天一次
+                return [DailyMedicineInstance(
+                    id: 1,
+                    medicine: medicine,
+                    date: date,
+                    isCompleted: findInstanceLog(medicineId: medicine.id, instanceId: 1, on: date) != nil,
+                    completedTime: findInstanceLog(medicineId: medicine.id, instanceId: 1, on: date)?.timestamp
                 )]
             }
         }

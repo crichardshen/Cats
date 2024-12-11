@@ -3,8 +3,7 @@ import SwiftUI
 struct MedicineListView: View {
     @StateObject private var viewModel: MedicineViewModel
     @ObservedObject var listViewModel: CatListViewModel
-    @State private var showingAddMedicine = false
-    @State private var selectedDate = Date()
+    @State private var showingAddSheet = false
     @State private var showingDatePicker = false
     @State private var editingMedicine: Medicine? = nil
     @State private var medicineToDelete: Medicine? = nil
@@ -16,63 +15,23 @@ struct MedicineListView: View {
     
     var body: some View {
         List {
-            // 日期选择器按钮和日历
+            // 日期选择部分
             Section {
-                Button(action: {
-                    withAnimation {
-                        showingDatePicker.toggle()
-                    }
-                }) {
+                Button {
+                    showingDatePicker = true
+                } label: {
                     HStack {
-                        Image(systemName: "calendar")
-                            .foregroundColor(ThemeColors.forestGreen)
-                        Text("查看指定日期完成状况")
+                        Text("查看指定日期")
                         Spacer()
-                        Image(systemName: showingDatePicker ? "chevron.up" : "chevron.down")
+                        Text(viewModel.selectedDate.formattedYYYYMMDD())
                             .foregroundColor(.gray)
-                    }
-                }
-                
-                if showingDatePicker {
-                    VStack {
-                        // 添加"今天"按钮
-                        HStack {
-                            Spacer()
-                            Button(action: {
-                                selectedDate = Date()  // 先更新日期
-                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {  // 延迟关闭日历
-                                    withAnimation {
-                                        showingDatePicker = false
-                                    }
-                                }
-                            }) {
-                                Label("今天", systemImage: "arrow.uturn.backward")
-                                    .foregroundColor(ThemeColors.forestGreen)
-                            }
-                            .padding(.trailing)
-                        }
-                        
-                        DatePicker(
-                            "选择日期",
-                            selection: $selectedDate,
-                            displayedComponents: .date
-                        )
-                        .datePickerStyle(.graphical)
-                        .transition(.opacity.combined(with: .move(edge: .top)))
-                        .onChange(of: selectedDate) { _ in
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {  // 延迟关闭日历
-                                withAnimation {
-                                    showingDatePicker = false
-                                }
-                            }
-                        }
                     }
                 }
             }
             
             // 今日待执行项目
             Section {
-                let medicineInstances = viewModel.medicinesForDate(selectedDate)
+                let medicineInstances = viewModel.medicinesForDate(viewModel.selectedDate)
                 if medicineInstances.isEmpty {
                     Text("今日没有需要执行的项目")
                         .foregroundColor(.gray)
@@ -90,7 +49,7 @@ struct MedicineListView: View {
                                                 viewModel.toggleInstanceLog(
                                                     for: instance.medicine,
                                                     instanceId: instance.id,
-                                                    on: selectedDate
+                                                    on: viewModel.selectedDate
                                                 )
                                             }
                                         }
@@ -109,7 +68,7 @@ struct MedicineListView: View {
                                         viewModel.toggleInstanceLog(
                                             for: instances[0].medicine,
                                             instanceId: 1,
-                                            on: selectedDate
+                                            on: viewModel.selectedDate
                                         )
                                     }
                                 }
@@ -121,7 +80,7 @@ struct MedicineListView: View {
                 HStack {
                     Text("待执行项目")
                     Spacer()
-                    Text(selectedDate.formattedYYYYMMDD())
+                    Text(viewModel.selectedDate.formattedYYYYMMDD())
                         .font(.caption)
                         .foregroundColor(.gray)
                 }
@@ -163,15 +122,15 @@ struct MedicineListView: View {
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button {
-                    showingAddMedicine = true
+                    showingAddSheet = true
                 } label: {
-                    Text("配置药剂项目")
+                    Text("添加药物")
                         .font(.subheadline)
                         .foregroundColor(ThemeColors.forestGreen)
                 }
             }
         }
-        .sheet(isPresented: $showingAddMedicine) {
+        .sheet(isPresented: $showingAddSheet) {
             AddMedicineView(catId: viewModel.catId) { medicine in
                 viewModel.addMedicine(medicine)
             }
@@ -207,103 +166,15 @@ struct MedicineListView: View {
                 listViewModel?.refreshMedicineStatus()
             }
         }
+        .localizedDatePickerSheet(
+            isPresented: $showingDatePicker,
+            date: $viewModel.selectedDate,
+            title: Locale.isChineseEnvironment ? "选择日期" : "Select Date"
+        )
     }
 }
 
 // MARK: - 子视图
-private struct MedicineRow: View {
-    let medicine: Medicine
-    let isCompleted: Bool
-    let completedTime: Date?
-    let onToggle: () -> Void
-    
-    var body: some View {
-        HStack {
-            VStack(alignment: .leading) {
-                Text(medicine.name)
-                    .font(.headline)
-                HStack {
-                    Text(medicine.type.rawValue)
-                        .font(.subheadline)
-                        .foregroundColor(.gray)
-                    if let time = completedTime {
-                        Text("✓ \(time.formatted(date: .omitted, time: .shortened))")
-                            .font(.subheadline)
-                            .foregroundColor(ThemeColors.forestGreen)
-                    }
-                }
-            }
-            
-            Spacer()
-            
-            Button(action: onToggle) {
-                Image(systemName: isCompleted ? "checkmark.circle.fill" : "circle")
-                    .foregroundColor(isCompleted ? ThemeColors.forestGreen : .gray)
-                    .imageScale(.large)
-            }
-        }
-        .contentShape(Rectangle())
-    }
-}
-
-private struct MedicineItemRow: View {
-    let medicine: Medicine
-    let logs: [MedicineLog]
-    
-    var body: some View {
-        NavigationLink {
-            MedicineStatsView(
-                medicine: medicine,
-                logs: logs.filter { $0.medicineId == medicine.id }
-            )
-        } label: {
-            VStack(alignment: .leading, spacing: 6) {
-                // 第一行：名称和类型
-                HStack(alignment: .center) {
-                    Text(medicine.name)
-                        .font(.headline)
-                        .foregroundColor(.primary)
-                    
-                    Text(medicine.type.rawValue)
-                        .font(.caption)
-                        .foregroundColor(.gray)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 2)
-                        .background(Color.gray.opacity(0.1))
-                        .cornerRadius(4)
-                }
-                
-                // 第二行：使用频率
-                Text(medicine.frequency.description)
-                    .font(.subheadline)
-                    .foregroundColor(.gray)
-                
-                // 第三行：起始日期
-                HStack {
-                    Text("从 \(medicine.startDate.formattedYYYYMMDD()) 开始")
-                        .font(.caption)
-                        .foregroundColor(.gray)
-                    
-                    if let endDate = medicine.endDate {
-                        Text("至 \(endDate.formattedYYYYMMDD())")
-                            .font(.caption)
-                            .foregroundColor(.gray)
-                    }
-                }
-                
-                // 第四行：备注（如果有）
-                if let note = medicine.note {
-                    Text(note)
-                        .font(.caption)
-                        .foregroundColor(.gray)
-                        .lineLimit(1)
-                }
-            }
-            .padding(.vertical, 6)
-        }
-    }
-}
-
 private struct MedicineInstanceRow: View {
     let instance: DailyMedicineInstance
     let onToggle: () -> Void
@@ -338,12 +209,10 @@ private struct MedicineInstanceRow: View {
             Spacer()
             
             if isFutureDate {
-                // 未来日期显示禁用状态的圆圈
                 Image(systemName: "circle")
                     .foregroundColor(.gray.opacity(0.5))
                     .imageScale(.large)
             } else {
-                // 当前或过去日期显示可点击的按钮
                 Button(action: onToggle) {
                     Image(systemName: instance.isCompleted ? "checkmark.circle.fill" : "circle")
                         .foregroundColor(instance.isCompleted ? ThemeColors.forestGreen : .gray)
@@ -352,5 +221,41 @@ private struct MedicineInstanceRow: View {
             }
         }
         .contentShape(Rectangle())
+    }
+}
+
+private struct MedicineItemRow: View {
+    let medicine: Medicine
+    let logs: [MedicineLog]
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(medicine.name)
+                .font(.headline)
+            
+            HStack {
+                Text(medicine.type.rawValue)
+                Text("•")
+                Text(medicine.frequency.description)
+            }
+            .font(.subheadline)
+            .foregroundColor(.gray)
+            
+            HStack {
+                Text("开始：\(medicine.startDate.formattedYYYYMMDD())")
+                if let endDate = medicine.endDate {
+                    Text("结束：\(endDate.formattedYYYYMMDD())")
+                }
+            }
+            .font(.caption)
+            .foregroundColor(.gray)
+            
+            if let note = medicine.note, !note.isEmpty {
+                Text(note)
+                    .font(.caption)
+                    .foregroundColor(.gray)
+            }
+        }
+        .padding(.vertical, 4)
     }
 } 

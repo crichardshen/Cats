@@ -10,7 +10,7 @@ class AddWeightRecordViewModel: ObservableObject {
     @Published var note = ""
     
     var isEditing: Bool { editingRecord != nil }
-    var canSave: Bool { !weight.isEmpty && Double(weight) != nil }
+    var canSave: Bool { !weight.isEmpty }
     
     init(catId: UUID, editingRecord: WeightRecord? = nil, onSave: @escaping (WeightRecord) -> Void) {
         self.catId = catId
@@ -18,7 +18,7 @@ class AddWeightRecordViewModel: ObservableObject {
         self.onSave = onSave
         
         if let record = editingRecord {
-            self.weight = String(format: "%.2f", record.weight)
+            self.weight = String(format: "%.1f", record.weight)
             self.timestamp = record.timestamp
             self.note = record.note ?? ""
         }

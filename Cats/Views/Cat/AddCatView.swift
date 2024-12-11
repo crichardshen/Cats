@@ -131,19 +131,11 @@ private extension AddCatView {
                         .foregroundColor(.gray)
                 }
             }
-            .sheet(isPresented: $showingBirthDatePicker) {
-                DatePicker(
-                    "选择出生日期",
-                    selection: $viewModel.birthDate,
-                    displayedComponents: .date
-                )
-                .datePickerStyle(.graphical)
-                .onChange(of: viewModel.birthDate) { _ in
-                    showingBirthDatePicker = false
-                }
-                .presentationDetents([.medium])
-                .padding()
-            }
+            .localizedDatePickerSheet(
+                isPresented: $showingBirthDatePicker,
+                date: $viewModel.birthDate,
+                title: Locale.isChineseEnvironment ? "选择出生日期" : "Select Birth Date"
+            )
             
             TextField("体重（kg）", text: $viewModel.weight)
                 .keyboardType(.decimalPad)
