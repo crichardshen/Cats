@@ -6,6 +6,14 @@ struct AddMedicineView: View {
     @State private var showingStartDatePicker = false
     @State private var showingEndDatePicker = false
     
+    // 添加日期格式化器
+    private let dateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "zh_CN")  // 设置中文区域
+        formatter.dateFormat = "yyyy年MM月dd日"
+        return formatter
+    }()
+    
     init(catId: UUID, editingMedicine: Medicine? = nil, onSave: @escaping (Medicine) -> Void) {
         _viewModel = StateObject(wrappedValue: AddMedicineViewModel(
             catId: catId,
@@ -34,7 +42,7 @@ struct AddMedicineView: View {
                         HStack {
                             Text("开始日期")
                             Spacer()
-                            Text(viewModel.startDate.formatted(date: .long, time: .omitted))
+                            Text(viewModel.startDate.formattedYYYYMMDD())
                                 .foregroundColor(.gray)
                         }
                     }
@@ -51,7 +59,7 @@ struct AddMedicineView: View {
                             HStack {
                                 Text("结束日期")
                                 Spacer()
-                                Text(viewModel.endDate.formatted(date: .long, time: .omitted))
+                                Text(viewModel.endDate.formattedYYYYMMDD())
                                     .foregroundColor(.gray)
                             }
                         }
@@ -85,30 +93,50 @@ struct AddMedicineView: View {
                 }
             }
             .sheet(isPresented: $showingStartDatePicker) {
-                DatePicker(
-                    "选择开始日期",
-                    selection: $viewModel.startDate,
-                    displayedComponents: .date
-                )
-                .datePickerStyle(.graphical)
-                .onChange(of: viewModel.startDate) { _ in
-                    showingStartDatePicker = false
+                VStack {
+                    HStack {
+                        Button("取消") {
+                            showingStartDatePicker = false
+                        }
+                        Spacer()
+                        Button("确定") {
+                            showingStartDatePicker = false
+                        }
+                    }
+                    .padding()
+                    
+                    DatePicker(
+                        "选择开始日期",
+                        selection: $viewModel.startDate,
+                        displayedComponents: .date
+                    )
+                    .datePickerStyle(.graphical)
+                    .environment(\.locale, Locale(identifier: "zh_CN"))  // 设置中文区域
                 }
                 .presentationDetents([.medium])
-                .padding()
             }
             .sheet(isPresented: $showingEndDatePicker) {
-                DatePicker(
-                    "选择结束日期",
-                    selection: $viewModel.endDate,
-                    displayedComponents: .date
-                )
-                .datePickerStyle(.graphical)
-                .onChange(of: viewModel.endDate) { _ in
-                    showingEndDatePicker = false
+                VStack {
+                    HStack {
+                        Button("取消") {
+                            showingEndDatePicker = false
+                        }
+                        Spacer()
+                        Button("确定") {
+                            showingEndDatePicker = false
+                        }
+                    }
+                    .padding()
+                    
+                    DatePicker(
+                        "选择结束日期",
+                        selection: $viewModel.endDate,
+                        displayedComponents: .date
+                    )
+                    .datePickerStyle(.graphical)
+                    .environment(\.locale, Locale(identifier: "zh_CN"))  // 设置中文区域
                 }
                 .presentationDetents([.medium])
-                .padding()
             }
         }
     }
