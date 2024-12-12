@@ -56,7 +56,7 @@ struct MedicineListView: View {
                                     )
                                 }
                             } label: {
-                                Text("\(instances[0].medicine.name) (每日\(instances.count)次)")
+                                Text("\(instances[0].medicine.name) (今日\(instances.count)次)")
                                     .font(.headline)
                             }
                         } else {

@@ -101,6 +101,7 @@ class MedicineViewModel: ObservableObject {
     func medicinesForDate(_ date: Date) -> [DailyMedicineInstance] {
         let calendar = Calendar.current
         let startOfSelectedDate = calendar.startOfDay(for: date)
+        let endOfSelectedDate = calendar.date(bySettingHour: 23, minute: 59, second: 59, of: date)!
         let startOfToday = calendar.startOfDay(for: Date())
         
         return medicines.flatMap { medicine -> [DailyMedicineInstance] in
@@ -149,15 +150,39 @@ class MedicineViewModel: ObservableObject {
                     completedTime: findInstanceLog(medicineId: medicine.id, instanceId: 1, on: date)?.timestamp
                 )]
                 
-            case .custom:
-                // 暂时简单处理自定义频率，每天一次
-                return [DailyMedicineInstance(
-                    id: 1,
-                    medicine: medicine,
-                    date: date,
-                    isCompleted: findInstanceLog(medicineId: medicine.id, instanceId: 1, on: date) != nil,
-                    completedTime: findInstanceLog(medicineId: medicine.id, instanceId: 1, on: date)?.timestamp
-                )]
+            case .custom(let years, let months, let days, let hours):
+                // 计算间隔时间（转换为秒）
+                let intervalInSeconds = TimeInterval(
+                    years * 365 * 24 * 3600 +
+                    months * 30 * 24 * 3600 +
+                    days * 24 * 3600 +
+                    hours * 3600
+                )
+                
+                // 获取从开始时间到选定日期结束时间的所有用药时间点
+                var instances: [DailyMedicineInstance] = []
+                var currentTime = medicine.startDate
+                var dailyInstanceId = 1  // 每天的实例 ID 从 1 开始
+                
+                while currentTime <= endOfSelectedDate {
+                    // 如果时间点在选定日期内，添加一个实例
+                    if calendar.isDate(currentTime, inSameDayAs: date) {
+                        let log = findInstanceLog(medicineId: medicine.id, instanceId: dailyInstanceId, on: date)
+                        instances.append(DailyMedicineInstance(
+                            id: dailyInstanceId,  // 使用每天的实例 ID
+                            medicine: medicine,
+                            date: currentTime,
+                            isCompleted: log != nil,
+                            completedTime: log?.timestamp
+                        ))
+                        dailyInstanceId += 1  // 只在添加实例时增加 ID
+                    }
+                    
+                    // 移动到下一个时间点
+                    currentTime = currentTime.addingTimeInterval(intervalInSeconds)
+                }
+                
+                return instances
             }
         }
     }
